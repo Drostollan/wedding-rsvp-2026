@@ -750,7 +750,19 @@ let activeTab = 'wedding';
 let searchQ = '';
 let activeFilter = 'all';
 let expandedId = null;
-
+let saveTimer = null;
+function debounceSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+        // This silently updates the cloud in the background
+        guests.forEach(g => {
+            guestsRef.doc(g.id).update({ 
+                notes: g.notes || '',
+                meal: g.meal || ''
+            });
+        });
+    }, 1000); 
+}
 function listenToGuests() {
     guestsRef.onSnapshot((snapshot) => {
         if (snapshot.empty) {
@@ -872,7 +884,7 @@ function cardHTML(g) {
                         ${MEALS.map(m => `<option value="${m}" ${g.meal === m ? 'selected' : ''}>${m || '— Select a meal —'}</option>`).join('')}
                     </select>
                     <p class="field-label">Notes</p>
-                    <textarea class="field-input" rows="2" onclick="event.stopPropagation()" oninput="setNotes('${g.id}', this.value)">${g.notes || ''}</textarea>
+                    <textarea class="field-input" rows="2" onclick="event.stopPropagation()" oninput="guests.find(x => x.id === '${g.id}').notes = this.value; debounceSave()">${g.notes || ''}</textarea>
                 </div>
             </div>
         </div>
